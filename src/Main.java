@@ -2,7 +2,7 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        HuffmanAlgorithm huffman = new HuffmanAlgorithm(new HuffmanCompression(), new HuffmanDecompression());
+        HuffmanAlgorithm huffman = new HuffmanAlgorithm();
         System.out.println("Huffman Algorithm - choose your required functionality [1-3]:");
         while(true){
             System.out.println("1. Compression \n2. Decompression \n3. Exit");
@@ -10,8 +10,8 @@ public class Main {
             int x = sc.nextInt();
             switch (x) {
                 case 1 -> {
-                    if(huffman.readFile())
-                        huffman.writeToFile(huffman.c.compress(), 'c');
+                    String content = huffman.readFile();
+                    if(content != null) huffman.compress(content);
                 }
                 case 2 -> {
                     huffman.readFile();

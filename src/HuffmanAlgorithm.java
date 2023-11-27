@@ -8,42 +8,34 @@ import java.util.*;
 public class HuffmanAlgorithm {
     Map<Character, Integer> characterFrequency = new HashMap<>();
     Map<Character, String> characterCode = new HashMap<>();
-    HuffmanCompression c;
-    HuffmanDecompression d;
     String file = "";
-    public HuffmanAlgorithm(HuffmanCompression c, HuffmanDecompression d) {
-        this.c = c;
-        this.d = d;
-    }
-    public boolean readFile(){
+    public String readFile(){
         Scanner sc = new Scanner(System.in);
         System.out.print("Please enter the filename: ");
         String fileName = sc.nextLine();
         Path path = Paths.get(fileName);
         try {
             String content = Files.readString(path);
-            c.setInput(content);
-            d.setInput(content);
             file = fileName;
-            return true;
+            return content;
         }
         catch (IOException ex) {
             System.out.println("The file does not exist.");
             System.out.print("Do you want to try again? (y/n): ");
             char choice = sc.next().charAt(0);
             if(choice == 'Y' || choice == 'y') readFile();
-            return false;
+            return null;
         }
     }
 
-    public void writeToFile(String str, char option) {
+    public void writeToFile(String str, Boolean compress) {
         if (!Objects.equals(file, "")) {
             int i = file.indexOf(".");
             int j = file.indexOf("_");
             int x = j;
             if(j == -1) x = i;
             String newName;
-            if(option == 'd')
+            if(!compress)
                 newName = file.substring(0,x) + "_decompressed.txt";
             else
                 newName = file.substring(0,x) + "_compressed.txt";
@@ -86,42 +78,62 @@ public class HuffmanAlgorithm {
             Node newNode = new Node(null, left, right, sum);
             pq.add(newNode);
         }
-        traverseTree(pq.peek());
+        generateCodes(pq.peek(), "");
     }
 
-    public void traverseTree(Node root){
-        String code = "0", codeRight = "1";
-        Node left = root.left;
-        Node right = root.right;
-        Stack<Node> stack = new Stack<>();
-        Node node = root;
-
-        while (node != null) {
-            stack.push(node);
-            code += "0";
-            if(node.left == null){
-                characterCode.put(node.c, code);
-            }
-            node = node.left;
+    public void generateCodes(Node root, String code){
+        if(root == null) return;
+        if(root.c != null){
+            characterCode.put(root.c, code);
         }
-
-//        int[] result = new int[stack.size()];
-        int i = 0;
-        while (stack.size() > 0) {
-            node = stack.pop();
-            code = code.substring(0, code.length()-1);
-//            if(node != null) {
-//
-//            }
-            if (node.right != null) {
-                code += 1;
-                node = node.right;
-
-                while (node != null) {
-                    stack.push(node);
-                    node = node.left;
+        generateCodes(root.left, code + '0');
+        generateCodes(root.right, code + '1');
+    }
+    public static String convertToBinary(String input) {
+        String binary = "";
+        for (int i = 0; i < input.length(); i++) {
+            String value = Integer.toBinaryString(input.charAt(i));
+            if(value.length() < 8){
+                int cnt = 8 - value.length();
+                for (int j = 0; j < cnt; j++) {
+                    value = "0" + value;
                 }
             }
+            binary += value;
         }
+        return binary;
+    }
+
+    public void compress(String input){
+        String compressedCode = "";
+        buildTree(input, true);
+        for (int i = 0; i < input.length(); i++) {
+            compressedCode += characterCode.get(input.charAt(i));
+        }
+        int count = compressedCode.length()%8;
+        count = 8-count;
+        for (int i = 0; i < count; i++) {
+            compressedCode = '0' + compressedCode;
+        }
+        System.out.println(compressedCode);
+        String binaryCompressed = "";
+        for (int i = 0; i < compressedCode.length()/8; i++) {
+            String value = compressedCode.substring(8*i,(i+1)*8);
+            int bin = Integer.parseInt(value,2);
+            binaryCompressed += (char)(bin);
+        }
+        // overhead will include count - number of characters - each character and its corresponding frequency
+        String overhead = "";
+        overhead += (char)(count);
+        overhead += (char) characterFrequency.size();
+        for (var entry: characterFrequency.entrySet()) {
+            overhead += entry.getKey();
+            int freq = entry.getValue();
+            overhead += (char) freq;
+        }
+        System.out.println(overhead);
+        System.out.println(convertToBinary(overhead));
+        System.out.println(convertToBinary(binaryCompressed));
+        writeToFile(overhead + binaryCompressed, true);
     }
 }
