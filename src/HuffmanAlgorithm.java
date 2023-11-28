@@ -54,11 +54,8 @@ public class HuffmanAlgorithm {
         Map<Character, Integer> mp = new HashMap<>();
         char[] characters = input.toCharArray();
         for (int i = 0; i < characters.length; i++) {
-            mp.put(characters[i], 0);
-        }
-        for (int i = 0; i < characters.length; i++) {
-            int val = mp.get(characters[i]);
-            mp.put(characters[i], val+1);
+            int val = mp.getOrDefault(characters[i], 0);
+            mp.put(characters[i], val + 1);
         }
         return mp;
     }
@@ -110,18 +107,19 @@ public class HuffmanAlgorithm {
         for (int i = 0; i < input.length(); i++) {
             compressedCode += characterCode.get(input.charAt(i));
         }
-        int count = compressedCode.length()%8;
-        count = 8-count;
+        int count = compressedCode.length() % 8;
+        count = 8 - count;
         for (int i = 0; i < count; i++) {
             compressedCode = '0' + compressedCode;
         }
-        System.out.println(compressedCode);
+
         String binaryCompressed = "";
         for (int i = 0; i < compressedCode.length()/8; i++) {
             String value = compressedCode.substring(8*i,(i+1)*8);
             int bin = Integer.parseInt(value,2);
             binaryCompressed += (char)(bin);
         }
+
         // overhead will include count - number of characters - each character and its corresponding frequency
         String overhead = "";
         overhead += (char)(count);
@@ -131,9 +129,57 @@ public class HuffmanAlgorithm {
             int freq = entry.getValue();
             overhead += (char) freq;
         }
-        System.out.println(overhead);
-        System.out.println(convertToBinary(overhead));
-        System.out.println(convertToBinary(binaryCompressed));
         writeToFile(overhead + binaryCompressed, true);
+    }
+
+    public Character getCharacter(String code){
+        for(var entry: characterCode.entrySet()) {
+            if(entry.getValue().equals(code)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public void decompress(String input){
+        int count, uniqueCharacters;
+
+        String binaryCompressed = convertToBinary(input);
+        // retrieving overhead
+        String cntValue = binaryCompressed.substring(0,8); // represents count
+        count = Integer.parseInt(cntValue,2);
+
+        String charValue = binaryCompressed.substring(8,16); // represents number of unique characters
+        uniqueCharacters = Integer.parseInt(charValue,2);
+        int cnt = 2;
+        for (int i = 0; i < uniqueCharacters; i++) {                            // 0  1  2
+            // convert key
+            String value1 = binaryCompressed.substring(8*(i+cnt),(i+cnt+1)*8);  // 2  4  6
+            char key = (char) Integer.parseInt(value1, 2);
+            cnt++;
+            // convert value
+            String value2 = binaryCompressed.substring(8*(i+cnt),(i+cnt+1)*8);  // 3  5  7
+            int value = Integer.parseInt(value2,2);
+            characterFrequency.put(key, value);
+        }
+
+        // build tree
+        buildTree("", false);
+
+        // retrieving compressed code
+        // 16 + 16 * unique characters
+        binaryCompressed = binaryCompressed.substring(16 + 16 * uniqueCharacters + count);
+        String value = "";
+        String decompressedData = "";
+        for (int i = 0; i < binaryCompressed.length(); i++) {
+            value = "";
+            value += binaryCompressed.charAt(i);
+            while(!characterCode.containsValue(value)){
+                i++;
+                value += binaryCompressed.charAt(i);
+            }
+            decompressedData += getCharacter(value);
+        }
+        writeToFile(decompressedData, false);
     }
 }
