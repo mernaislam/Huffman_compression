@@ -9,10 +9,8 @@ public class HuffmanAlgorithm {
     Map<Character, Integer> characterFrequency = new HashMap<>();
     Map<Character, String> characterCode = new HashMap<>();
     String file = "";
-    public String readFile(){
+    public String readFile(String fileName){
         Scanner sc = new Scanner(System.in);
-        System.out.print("Please enter the filename: ");
-        String fileName = sc.nextLine();
         Path path = Paths.get(fileName);
         try {
             String content = Files.readString(path);
@@ -20,10 +18,6 @@ public class HuffmanAlgorithm {
             return content;
         }
         catch (IOException ex) {
-            System.out.println("The file does not exist.");
-            System.out.print("Do you want to try again? (y/n): ");
-            char choice = sc.next().charAt(0);
-            if(choice == 'Y' || choice == 'y') readFile();
             return null;
         }
     }
@@ -42,10 +36,9 @@ public class HuffmanAlgorithm {
             Path path = Paths.get(newName);
             try {
                 Files.writeString(path, str, StandardCharsets.UTF_8);
-                System.out.println("Done Successfully!");
             }
             catch (IOException ex) {
-                System.out.println("The file does not exist.");
+                //....
             }
         }
     }
